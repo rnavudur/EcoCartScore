@@ -1,0 +1,1187 @@
+import React, { useState, useEffect, useRef } from 'react'
+import { 
+  ShoppingCart, 
+  Leaf, 
+  Package, 
+  Truck, 
+  Recycle, 
+  Plus,
+  Trash2,
+  Calculator,
+  Search,
+  Filter,
+  Star,
+  Eye,
+  Grid3X3,
+  List,
+  ChevronDown,
+  Scan,
+  X,
+  Camera
+} from 'lucide-react'
+import axios from 'axios'
+
+const Dashboard = ({ sampleCart, onAnalyzeCart, loading }) => {
+  const [cart, setCart] = useState(sampleCart)
+  const [products, setProducts] = useState([])
+  const [filteredProducts, setFilteredProducts] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
+  const [isProductsLoading, setIsProductsLoading] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
+  const [scanResult, setScanResult] = useState('')
+  const videoRef = useRef(null)
+  const canvasRef = useRef(null)
+
+  const categories = [
+    { value: 'all', label: 'All Categories', count: 0 },
+    { value: 'dairy', label: 'Dairy', count: 0 },
+    { value: 'produce', label: 'Produce', count: 0 },
+    { value: 'meat', label: 'Meat & Seafood', count: 0 },
+    { value: 'beverages', label: 'Beverages', count: 0 },
+    { value: 'snacks', label: 'Snacks', count: 0 },
+    { value: 'household', label: 'Household & Cleaning', count: 0 },
+    { value: 'pantry', label: 'Pantry & Canned Goods', count: 0 },
+    { value: 'spices', label: 'Spices & Seasonings', count: 0 }
+  ]
+
+  // Fetch products from API
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  // Filter products based on search and category
+  useEffect(() => {
+    let filtered = products
+    
+    if (searchTerm) {
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.brand.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+    
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(product => {
+        // Handle category mapping for database vs frontend categories
+        const productCategory = product.category.toLowerCase()
+        if (selectedCategory === 'household') {
+          return ['cleaning', 'storage', 'electronics', 'personal care'].includes(productCategory)
+        }
+        if (selectedCategory === 'pantry') {
+          return ['canned goods', 'bakery', 'frozen meals', 'frozen desserts'].includes(productCategory)
+        }
+        return productCategory === selectedCategory
+      })
+    }
+    
+    setFilteredProducts(filtered)
+  }, [products, searchTerm, selectedCategory])
+
+  const fetchProducts = async () => {
+    try {
+      setIsProductsLoading(true)
+      const response = await axios.get('/api/products')
+      setProducts(response.data)
+      setFilteredProducts(response.data)
+    } catch (error) {
+      console.error('Failed to fetch products:', error)
+      // Enhanced fallback with all categories populated and REAL product images
+      const fallbackProducts = [
+        // Dairy Products
+        {
+          productId: '12345678',
+          name: 'Great Value Organic Whole Milk, 1/2 gal',
+          brand: 'Great Value',
+          category: 'dairy',
+          price: 3.98,
+          image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.2,
+          sourcingScore: 4.8,
+          carbonScore: 4.1,
+          recyclabilityScore: 3.8,
+          isOrganic: true,
+          packagingType: 'Paper Carton',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '34562891',
+          name: 'Horizon Organic Whole Milk, 32 fl oz',
+          brand: 'Horizon',
+          category: 'dairy',
+          price: 4.49,
+          image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.5,
+          sourcingScore: 4.9,
+          carbonScore: 4.3,
+          recyclabilityScore: 4.0,
+          isOrganic: true,
+          packagingType: 'Paper Carton',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '45673912',
+          name: 'Chobani Greek Yogurt, Strawberry, 5.3 oz',
+          brand: 'Chobani',
+          category: 'dairy',
+          price: 1.29,
+          image: 'https://images.unsplash.com/photo-1571212515416-5a1685dc0a48?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.8,
+          sourcingScore: 4.2,
+          carbonScore: 3.9,
+          recyclabilityScore: 4.1,
+          isOrganic: false,
+          packagingType: 'Plastic Cup',
+          sourceCountry: 'USA'
+        },
+
+        // Meat Products
+        {
+          productId: '56784123',
+          name: 'Grass-Fed Ground Beef, 1 lb',
+          brand: 'Nature\'s Best',
+          category: 'meat',
+          price: 8.99,
+          image: 'https://images.unsplash.com/photo-1558030006-450675393462?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.2,
+          sourcingScore: 4.7,
+          carbonScore: 2.8,
+          recyclabilityScore: 2.5,
+          isOrganic: true,
+          packagingType: 'Plastic Wrap',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '67895234',
+          name: 'Free-Range Chicken Breast, 1 lb',
+          brand: 'Farm Fresh',
+          category: 'meat',
+          price: 6.79,
+          image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.5,
+          sourcingScore: 4.4,
+          carbonScore: 3.2,
+          recyclabilityScore: 2.8,
+          isOrganic: false,
+          packagingType: 'Plastic Wrap',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '78906345',
+          name: 'Wild Atlantic Salmon Fillet, 8 oz',
+          brand: 'Ocean\'s Best',
+          category: 'meat',
+          price: 12.99,
+          image: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.8,
+          sourcingScore: 4.6,
+          carbonScore: 3.4,
+          recyclabilityScore: 3.0,
+          isOrganic: false,
+          packagingType: 'Plastic Wrap',
+          sourceCountry: 'Alaska'
+        },
+        {
+          productId: '89017456',
+          name: 'Wild Caught Shrimp, 1 lb',
+          brand: 'Coastal Catch',
+          category: 'meat',
+          price: 9.99,
+          image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.6,
+          sourcingScore: 4.3,
+          carbonScore: 3.1,
+          recyclabilityScore: 2.9,
+          isOrganic: false,
+          packagingType: 'Plastic Bag',
+          sourceCountry: 'USA'
+        },
+
+        // Produce
+        {
+          productId: '90128567',
+          name: 'Organic Bananas, 2 lbs',
+          brand: 'Organic Farms',
+          category: 'produce',
+          price: 2.49,
+          image: 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.8,
+          sourcingScore: 4.9,
+          carbonScore: 4.6,
+          recyclabilityScore: 5.0,
+          isOrganic: true,
+          packagingType: 'None',
+          sourceCountry: 'Ecuador'
+        },
+        {
+          productId: '01239678',
+          name: 'Gala Apples, 3 lb bag',
+          brand: 'Fresh Orchards',
+          category: 'produce',
+          price: 3.99,
+          image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.2,
+          sourcingScore: 4.5,
+          carbonScore: 4.3,
+          recyclabilityScore: 4.0,
+          isOrganic: false,
+          packagingType: 'Plastic Bag',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '12340789',
+          name: 'Fresh Broccoli Crowns, 1 lb',
+          brand: 'Garden Fresh',
+          category: 'produce',
+          price: 2.99,
+          image: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.6,
+          sourcingScore: 4.7,
+          carbonScore: 4.8,
+          recyclabilityScore: 4.9,
+          isOrganic: false,
+          packagingType: 'Plastic Wrap',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '23451890',
+          name: 'Organic Baby Spinach, 5 oz',
+          brand: 'Leafy Greens Co.',
+          category: 'produce',
+          price: 3.49,
+          image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.9,
+          sourcingScore: 4.8,
+          carbonScore: 4.7,
+          recyclabilityScore: 3.5,
+          isOrganic: true,
+          packagingType: 'Plastic Container',
+          sourceCountry: 'USA'
+        },
+
+        // Beverages  
+        {
+          productId: '34562901',
+          name: 'Coca-Cola Classic, 12 pack',
+          brand: 'Coca-Cola',
+          category: 'beverages',
+          price: 5.99,
+          image: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 2.8,
+          sourcingScore: 3.2,
+          carbonScore: 2.5,
+          recyclabilityScore: 4.2,
+          isOrganic: false,
+          packagingType: 'Aluminum Cans',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '45674012',
+          name: 'Smartwater, 1 liter',
+          brand: 'Smartwater',
+          category: 'beverages',
+          price: 1.99,
+          image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.4,
+          sourcingScore: 3.8,
+          carbonScore: 3.1,
+          recyclabilityScore: 4.5,
+          isOrganic: false,
+          packagingType: 'Plastic Bottle',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '56785123',
+          name: 'Simply Orange Juice, 52 fl oz',
+          brand: 'Simply',
+          category: 'beverages',
+          price: 4.29,
+          image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.6,
+          sourcingScore: 4.1,
+          carbonScore: 3.8,
+          recyclabilityScore: 4.0,
+          isOrganic: false,
+          packagingType: 'Plastic Bottle',
+          sourceCountry: 'USA'
+        },
+
+        // Snacks
+        {
+          productId: '67896234',
+          name: 'Welch\'s Fruit Snacks, Mixed Fruit',
+          brand: 'Welch\'s',
+          category: 'snacks',
+          price: 3.79,
+          image: 'https://images.unsplash.com/photo-1582385209592-4b17d5b5c9b4?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 2.5,
+          sourcingScore: 3.4,
+          carbonScore: 2.8,
+          recyclabilityScore: 2.2,
+          isOrganic: false,
+          packagingType: 'Plastic Pouch',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '78907345',
+          name: 'Lay\'s Classic Potato Chips, 10 oz',
+          brand: 'Lay\'s',
+          category: 'snacks',
+          price: 4.49,
+          image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 2.3,
+          sourcingScore: 3.1,
+          carbonScore: 2.6,
+          recyclabilityScore: 2.0,
+          isOrganic: false,
+          packagingType: 'Plastic Bag',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '89018456',
+          name: 'Oreo Original Cookies, 14.3 oz',
+          brand: 'Oreo',
+          category: 'snacks',
+          price: 4.99,
+          image: 'https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 2.7,
+          sourcingScore: 3.3,
+          carbonScore: 2.9,
+          recyclabilityScore: 3.2,
+          isOrganic: false,
+          packagingType: 'Plastic Tray',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '90129567',
+          name: 'Planters Mixed Nuts Trail Mix, 6 oz',
+          brand: 'Planters',
+          category: 'snacks',
+          price: 5.99,
+          image: 'https://images.unsplash.com/photo-1599599810694-57a2ca389862?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.1,
+          sourcingScore: 4.0,
+          carbonScore: 3.5,
+          recyclabilityScore: 2.8,
+          isOrganic: false,
+          packagingType: 'Plastic Container',
+          sourceCountry: 'USA'
+        },
+
+        // Household Items
+        {
+          productId: '01230678',
+          name: 'Dawn Ultra Dish Soap, 19.4 fl oz',
+          brand: 'Dawn',
+          category: 'cleaning',
+          price: 2.99,
+          image: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.2,
+          sourcingScore: 3.5,
+          carbonScore: 3.1,
+          recyclabilityScore: 4.3,
+          isOrganic: false,
+          packagingType: 'Plastic Bottle',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '12341789',
+          name: 'Method All-Purpose Cleaner, 28 fl oz',
+          brand: 'Method',
+          category: 'cleaning',
+          price: 4.99,
+          image: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.1,
+          sourcingScore: 4.2,
+          carbonScore: 4.0,
+          recyclabilityScore: 4.5,
+          isOrganic: false,
+          packagingType: 'Plastic Bottle',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '23452890',
+          name: 'Charmin Ultra Soft Toilet Paper, 12 rolls',
+          brand: 'Charmin',
+          category: 'personal care',
+          price: 12.99,
+          image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.4,
+          sourcingScore: 3.8,
+          carbonScore: 3.6,
+          recyclabilityScore: 4.7,
+          isOrganic: false,
+          packagingType: 'Plastic Wrap',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '34563901',
+          name: 'Rubbermaid Food Storage Set, 20 piece',
+          brand: 'Rubbermaid',
+          category: 'storage',
+          price: 19.99,
+          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.5,
+          sourcingScore: 3.9,
+          carbonScore: 3.7,
+          recyclabilityScore: 4.8,
+          isOrganic: false,
+          packagingType: 'Cardboard Box',
+          sourceCountry: 'USA'
+        },
+
+        // Pantry & Canned Goods
+        {
+          productId: '45675012',
+          name: 'Campbell\'s Tomato Soup, 10.75 oz',
+          brand: 'Campbell\'s',
+          category: 'canned goods',
+          price: 1.29,
+          image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.2,
+          sourcingScore: 3.7,
+          carbonScore: 3.9,
+          recyclabilityScore: 4.8,
+          isOrganic: false,
+          packagingType: 'Metal Can',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '56786123',
+          name: 'Wonder Bread Classic White, 20 oz',
+          brand: 'Wonder',
+          category: 'bakery',
+          price: 1.99,
+          image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 2.8,
+          sourcingScore: 3.2,
+          carbonScore: 3.0,
+          recyclabilityScore: 2.5,
+          isOrganic: false,
+          packagingType: 'Plastic Bag',
+          sourceCountry: 'USA'
+        },
+        {
+          productId: '67897234',
+          name: 'Barilla Spaghetti Pasta, 1 lb',
+          brand: 'Barilla',
+          category: 'pantry',
+          price: 1.49,
+          image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.8,
+          sourcingScore: 4.1,
+          carbonScore: 4.0,
+          recyclabilityScore: 4.2,
+          isOrganic: false,
+          packagingType: 'Cardboard Box',
+          sourceCountry: 'Italy'
+        },
+        {
+          productId: '78908345',
+          name: 'Hunt\'s Tomato Sauce, 15 oz',
+          brand: 'Hunt\'s',
+          category: 'canned goods',
+          price: 0.99,
+          image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.0,
+          sourcingScore: 3.6,
+          carbonScore: 3.8,
+          recyclabilityScore: 4.7,
+          isOrganic: false,
+          packagingType: 'Metal Can',
+          sourceCountry: 'USA'
+        },
+
+        // Spices & Seasonings
+        {
+          productId: '89019456',
+          name: 'McCormick Oregano Leaves, 0.75 oz',
+          brand: 'McCormick',
+          category: 'spices',
+          price: 1.99,
+          image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.5,
+          sourcingScore: 4.3,
+          carbonScore: 4.1,
+          recyclabilityScore: 3.2,
+          isOrganic: false,
+          packagingType: 'Plastic Shaker',
+          sourceCountry: 'Turkey'
+        },
+        {
+          productId: '90120567',
+          name: 'McCormick Pure Black Pepper, 1 oz',
+          brand: 'McCormick',
+          category: 'spices',
+          price: 2.49,
+          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 3.4,
+          sourcingScore: 4.2,
+          carbonScore: 4.0,
+          recyclabilityScore: 3.1,
+          isOrganic: false,
+          packagingType: 'Plastic Shaker',
+          sourceCountry: 'India'
+        },
+        {
+          productId: '01231678',
+          name: 'Himalayan Pink Salt, 5 oz',
+          brand: 'Simply Organic',
+          category: 'spices',
+          price: 3.99,
+          image: 'https://images.unsplash.com/photo-1551798507-629020c81463?w=400&h=400&fit=crop&crop=center',
+          packagingScore: 4.0,
+          sourcingScore: 4.5,
+          carbonScore: 4.3,
+          recyclabilityScore: 3.8,
+          isOrganic: true,
+          packagingType: 'Glass Jar',
+          sourceCountry: 'Pakistan'
+        }
+      ]
+      setProducts(fallbackProducts)
+      setFilteredProducts(fallbackProducts)
+    } finally {
+      setIsProductsLoading(false)
+    }
+  }
+
+  // Scanner functionality
+  const startScanner = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment', // Use back camera
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        setShowScanner(true)
+      }
+    } catch (err) {
+      console.error('Error accessing camera:', err)
+      alert('Unable to access camera. Please check permissions.')
+    }
+  }
+
+  const stopScanner = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks()
+      tracks.forEach(track => track.stop())
+      videoRef.current.srcObject = null
+    }
+    setShowScanner(false)
+    setScanResult('')
+  }
+
+  const handleManualScan = () => {
+    // Simulate barcode scan - in real implementation, use a barcode library
+    const mockBarcodes = {
+      '078742370088': '10292387', // Great Value Milk
+      '041130006227': '89012345', // Coca-Cola
+      '012000002007': '90123456', // Lay's Chips
+      '041797001169': '14898765', // Simply Organic Oregano
+      '025317004000': '23847291', // Annie's Fruit Snacks
+    }
+    
+    // Generate random barcode for demo
+    const barcodes = Object.keys(mockBarcodes)
+    const randomBarcode = barcodes[Math.floor(Math.random() * barcodes.length)]
+    const productId = mockBarcodes[randomBarcode]
+    
+    setScanResult(randomBarcode)
+    
+    // Find and highlight the product
+    const foundProduct = products.find(p => p.productId === productId)
+    if (foundProduct) {
+      setSearchTerm(foundProduct.name.split(',')[0]) // Use first part of name
+      stopScanner()
+    }
+  }
+
+  const addToCart = (product) => {
+    const existingItem = cart.find(item => item.id === product.productId)
+    if (existingItem) {
+      setCart(cart.map(item => 
+        item.id === product.productId 
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ))
+    } else {
+      setCart([...cart, {
+        id: product.productId,
+        name: product.name,
+        quantity: 1,
+        price: product.price,
+        category: product.category
+      }])
+    }
+  }
+
+  const removeFromCart = (productId) => {
+    setCart(cart.filter(item => item.id !== productId))
+  }
+
+  const updateCartQuantity = (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId)
+    } else {
+      setCart(cart.map(item => 
+        item.id === productId 
+          ? { ...item, quantity: newQuantity }
+          : item
+      ))
+    }
+  }
+
+  const getEcoScoreColor = (score) => {
+    if (score >= 4.0) return 'text-green-600'
+    if (score >= 3.0) return 'text-yellow-600'
+    return 'text-red-600'
+  }
+
+  const getEcoScoreBg = (score) => {
+    if (score >= 4.0) return 'bg-green-100'
+    if (score >= 3.0) return 'bg-yellow-100'
+    return 'bg-red-100'
+  }
+
+  const calculateOverallEcoScore = (product) => {
+    return ((product.packagingScore + product.sourcingScore + product.carbonScore + product.recyclabilityScore) / 4).toFixed(1)
+  }
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      produce: Leaf,
+      meat: Package,
+      dairy: Package,
+      beverages: Package,
+      household: Package,
+      spices: Leaf,
+      snacks: Package,
+      pantry: Package
+    }
+    const IconComponent = icons[category] || Package
+    return <IconComponent className="h-5 w-5" />
+  }
+
+  // Fallback image handler with product-specific fallbacks
+  const handleImageError = (e) => {
+    // First try a product-specific fallback from a reliable source
+    if (!e.target.dataset.fallbackAttempted) {
+      e.target.dataset.fallbackAttempted = 'true'
+      const productName = e.target.alt?.toLowerCase() || ''
+      
+      // Use a reliable service for product-specific images
+      let fallbackUrl = ''
+      
+      if (productName.includes('milk')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('yogurt')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1571212515416-5a1685dc0a48?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('ground beef') || productName.includes('beef')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1558030006-450675393462?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('chicken')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('salmon') || productName.includes('fish')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('shrimp')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('banana')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('apple')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('broccoli')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('spinach')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('coca-cola') || productName.includes('coke')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('water')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('orange juice') || productName.includes('juice')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('bunny fruit snacks') || productName.includes('fruit snacks')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1582385209592-4b17d5b5c9b4?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('chips') || productName.includes('potato')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('oreo') || productName.includes('cookies')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('trail mix') || productName.includes('nuts')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1599599810694-57a2ca389862?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('dish liquid') || productName.includes('cleaner')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('toilet paper')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('storage') || productName.includes('rubbermaid')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('soup')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('bread')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('pasta') || productName.includes('spaghetti')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('tomato sauce') || productName.includes('sauce')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('oregano') || productName.includes('spice')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('pepper')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?w=400&h=400&fit=crop&crop=center'
+      } else if (productName.includes('salt')) {
+        fallbackUrl = 'https://images.unsplash.com/photo-1606232417149-dda7e2b3b6be?w=400&h=400&fit=crop&crop=center'
+      } else {
+        // Generic fallback
+        fallbackUrl = 'https://images.unsplash.com/photo-1507003211179-0a62f943df0e?w=400&h=400&fit=crop&crop=center' // Fallback to a generic image
+      }
+      
+      e.target.src = fallbackUrl
+      return
+    }
+    
+    // If all fallbacks fail, hide the image
+    e.target.style.display = 'none'
+    // Show a placeholder div instead
+    const placeholder = document.createElement('div')
+    placeholder.className = 'w-full h-full bg-gray-200 flex items-center justify-center text-gray-500'
+    placeholder.innerHTML = '📦<br>Product<br>Image'
+    e.target.parentNode.appendChild(placeholder)
+  }
+
+  const ProductCard = ({ product }) => {
+    const ecoScore = getEcoScore(product)
+    const isInCart = cart.some(item => item.id === product.productId)
+    
+    return (
+      <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+        <div className="relative">
+          <img 
+            src={product.image} 
+            alt={product.name}
+            data-category={product.category}
+            onError={handleImageError}
+            className="w-full h-48 object-cover"
+            loading="lazy"
+          />
+          {product.isOrganic && (
+            <span className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+              Organic
+            </span>
+          )}
+          <div className="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md">
+            {getCategoryIcon(product.category)}
+          </div>
+        </div>
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              {getCategoryIcon(product.category)}
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                {product.category}
+              </span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                ecoScore >= 80 ? 'bg-green-100 text-green-800' :
+                ecoScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {ecoScore}
+              </div>
+              {product.isOrganic && (
+                <div className="bg-eco-green-100 text-eco-green-800 px-2 py-1 rounded-full text-xs font-bold">
+                  ORGANIC
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem]">
+            {product.name}
+          </h3>
+          
+          <p className="text-sm text-gray-600 mb-3">{product.brand}</p>
+          
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-2xl font-bold text-eco-green-600">
+              ${product.price}
+            </span>
+            <div className="text-xs text-gray-500">
+              {product.sourceCountry} • {product.packagingType}
+            </div>
+          </div>
+          
+          <button
+            onClick={() => addToCart(product)}
+            className={`w-full eco-button-primary flex items-center justify-center space-x-2 ${
+              isInCart ? 'bg-eco-green-700' : ''
+            }`}
+          >
+            <Plus className="h-4 w-4" />
+            <span>{isInCart ? 'Add More' : 'Add to Cart'}</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900">Product Catalog</h1>
+              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                {filteredProducts.length} products
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              {/* Scan Button */}
+              <button
+                onClick={startScanner}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Scan className="w-4 h-4 mr-2" />
+                Scan Product
+              </button>
+              
+              {/* View Mode Toggle */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-md transition-colors ${
+                    viewMode === 'grid' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-md transition-colors ${
+                    viewMode === 'list' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              {/* Search */}
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Categories */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
+                <div className="space-y-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category.value}
+                      onClick={() => setSelectedCategory(category.value)}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                        selectedCategory === category.value
+                          ? 'bg-blue-100 text-blue-800 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cart Summary */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Shopping Cart ({cart.length})
+                </h3>
+                
+                {cart.length === 0 ? (
+                  <p className="text-gray-500 text-sm">Your cart is empty</p>
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name}
+                          </p>
+                          <p className="text-xs text-gray-500">${item.price}</p>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-2">
+                          <button
+                            onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                            className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-300"
+                          >
+                            -
+                          </button>
+                          <span className="text-sm font-medium">{item.quantity}</span>
+                          <button
+                            onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                            className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-300"
+                          >
+                            +
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-red-500 hover:text-red-700 ml-1"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <button
+                      onClick={() => onAnalyzeCart(cart)}
+                      disabled={loading}
+                      className="w-full mt-4 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                    >
+                      {loading ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Analyzing...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <Calculator className="w-4 h-4 mr-2" />
+                          Analyze Cart
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="lg:col-span-3">
+            {isProductsLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600">Loading products...</span>
+              </div>
+            ) : (
+              <div className={`${
+                viewMode === 'grid' 
+                  ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' 
+                  : 'space-y-4'
+              }`}>
+                {filteredProducts.map((product) => {
+                  const overallScore = calculateOverallEcoScore(product)
+                  const isInCart = cart.some(item => item.id === product.productId)
+                  
+                  return (
+                    <div
+                      key={product.productId}
+                      className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow ${
+                        viewMode === 'list' ? 'flex' : ''
+                      }`}
+                    >
+                      {/* Product Image */}
+                      <div className={`${viewMode === 'list' ? 'w-24 h-24 flex-shrink-0' : 'w-full h-48'} bg-gray-100 overflow-hidden`}>
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          data-category={product.category}
+                          className="w-full h-full object-cover"
+                          onError={handleImageError}
+                        />
+                      </div>
+                      
+                      <div className={`p-4 ${viewMode === 'list' ? 'flex-1 flex items-center justify-between' : ''}`}>
+                        <div className={viewMode === 'list' ? 'flex-1' : ''}>
+                          {/* Product Info */}
+                          <div className={`${viewMode === 'list' ? 'flex items-start justify-between' : 'mb-3'}`}>
+                            <div className={viewMode === 'list' ? 'flex-1 mr-4' : ''}>
+                              <h3 className={`font-semibold text-gray-900 ${viewMode === 'list' ? 'text-sm' : 'text-base'} mb-1`}>
+                                {product.name}
+                              </h3>
+                              <p className={`text-gray-600 ${viewMode === 'list' ? 'text-xs' : 'text-sm'} mb-1`}>
+                                {product.brand}
+                              </p>
+                              <p className={`font-bold text-gray-900 ${viewMode === 'list' ? 'text-sm' : 'text-lg'}`}>
+                                ${product.price}
+                              </p>
+                            </div>
+                            
+                            {/* Eco Score */}
+                            <div className={`${viewMode === 'list' ? 'ml-4' : 'mt-2'}`}>
+                              <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getEcoScoreBg(overallScore)} ${getEcoScoreColor(overallScore)}`}>
+                                <Leaf className="w-3 h-3 mr-1" />
+                                {overallScore}/5.0
+                              </div>
+                              {product.isOrganic && (
+                                <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 ml-2">
+                                  Organic
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Eco Breakdown */}
+                          {viewMode === 'grid' && (
+                            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                              <div className="flex items-center">
+                                <Package className="w-3 h-3 mr-1 text-gray-500" />
+                                <span>Pack: {product.packagingScore}/5</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Truck className="w-3 h-3 mr-1 text-gray-500" />
+                                <span>Source: {product.sourcingScore}/5</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Leaf className="w-3 h-3 mr-1 text-gray-500" />
+                                <span>Carbon: {product.carbonScore}/5</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Recycle className="w-3 h-3 mr-1 text-gray-500" />
+                                <span>Recycle: {product.recyclabilityScore}/5</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Add to Cart Button */}
+                        <div className={viewMode === 'list' ? 'ml-4' : ''}>
+                          <button
+                            onClick={() => addToCart(product)}
+                            className={`${
+                              isInCart 
+                                ? 'bg-green-100 text-green-800 border-green-300' 
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                            } ${
+                              viewMode === 'list' ? 'px-3 py-1.5 text-sm' : 'w-full px-4 py-2'
+                            } border rounded-lg font-medium transition-colors flex items-center justify-center`}
+                          >
+                            {isInCart ? (
+                              <>
+                                <Eye className="w-4 h-4 mr-1" />
+                                In Cart
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add to Cart
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {filteredProducts.length === 0 && !isProductsLoading && (
+              <div className="text-center py-12">
+                <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                <p className="text-gray-500">Try adjusting your search or category filter.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Scanner Modal */}
+      {showScanner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Scan Product Barcode</h3>
+              <button
+                onClick={stopScanner}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="relative">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full h-64 bg-gray-900 rounded-lg object-cover"
+              />
+              <canvas
+                ref={canvasRef}
+                className="hidden"
+              />
+              
+              {/* Scan overlay */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-48 h-32 border-2 border-white rounded-lg opacity-80">
+                  <div className="w-full h-full border border-dashed border-white rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">Position barcode here</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 space-y-3">
+              <button
+                onClick={handleManualScan}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <Camera className="w-4 h-4 mr-2 inline" />
+                Simulate Scan (Demo)
+              </button>
+              
+              {scanResult && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm font-medium text-green-800">
+                    Scanned: {scanResult}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Product found and added to search!
+                  </p>
+                </div>
+              )}
+              
+              <button
+                onClick={stopScanner}
+                className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default Dashboard

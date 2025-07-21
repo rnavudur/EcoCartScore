@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: cart-analyzer-service
+          uri: http://localhost:8090
+          predicates:
+            - Path=/api/cart/**
+        
+        - id: product-metadata-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - AddRequestHeader=X-Response-Time, api-gateway
+        
+        - id: scoring-engine-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/scoring/**
+        
+        - id: reward-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/rewards/**
+        
+        - id: insights-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/insights/**
+      
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG 

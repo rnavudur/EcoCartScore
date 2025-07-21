@@ -1,0 +1,27 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: reward-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ecocart_rewards
+    username: ecocart_user
+    password: ecocart_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    com.walmart.ecocart: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics 

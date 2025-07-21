@@ -1,0 +1,70 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: cart-analyzer-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ecocart_cart_analyzer
+    username: ${DB_USERNAME:ecocart_user}
+    password: ${DB_PASSWORD:ecocart_pass}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+logging:
+  level:
+    com.walmart.ecocart.cartanalyzer: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+services:
+  product-metadata:
+    url: http://localhost:8081
+  scoring-engine:
+    url: http://localhost:8082
+  reward:
+    url: http://localhost:8083
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:postgresql://postgres:5432/ecocart_cart_analyzer
+
+services:
+  product-metadata:
+    url: http://product-metadata-service:8082
+  scoring-engine:
+    url: http://scoring-engine-service:8083
+  reward:
+    url: http://reward-service:8084 

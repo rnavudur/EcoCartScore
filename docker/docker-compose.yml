@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:15
+    container_name: ecocart-postgres
+    environment:
+      POSTGRES_DB: ecocart_main
+      POSTGRES_USER: ecocart_user
+      POSTGRES_PASSWORD: ecocart_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecocart-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ../backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: ecocart-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cart-analyzer-service
+      - product-metadata-service
+      - scoring-engine-service
+      - reward-service
+    networks:
+      - ecocart-network
+
+  # Cart Analyzer Service
+  cart-analyzer-service:
+    build:
+      context: ../backend/cart-analyzer-service
+      dockerfile: Dockerfile
+    container_name: ecocart-cart-analyzer
+    ports:
+      - "8084:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - postgres
+      - product-metadata-service
+      - scoring-engine-service
+      - reward-service
+    networks:
+      - ecocart-network
+
+  # Product Metadata Service
+  product-metadata-service:
+    build:
+      context: ../backend/product-metadata-service
+      dockerfile: Dockerfile
+    container_name: ecocart-product-metadata
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ecocart_metadata
+    depends_on:
+      - postgres
+    networks:
+      - ecocart-network
+
+  # Scoring Engine Service
+  scoring-engine-service:
+    build:
+      context: ../backend/scoring-engine-service
+      dockerfile: Dockerfile
+    container_name: ecocart-scoring-engine
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - ecocart-network
+
+  # Reward Service
+  reward-service:
+    build:
+      context: ../backend/reward-service
+      dockerfile: Dockerfile
+    container_name: ecocart-reward-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ecocart_rewards
+    depends_on:
+      - postgres
+    networks:
+      - ecocart-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: ecocart-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+    depends_on:
+      - api-gateway
+    networks:
+      - ecocart-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ecocart-network:
+    driver: bridge 
