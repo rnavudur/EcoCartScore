@@ -8,14 +8,16 @@ const Header = ({ currentPage, onNavigate }) => {
         <div className="flex items-center justify-between">
           <button 
             onClick={() => onNavigate('dashboard')}
-            className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-lg p-2"
+            className="flex items-center space-x-4 hover:opacity-80 transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-lg p-2 hover:scale-105"
           >
-            <div className="bg-white p-2 rounded-lg">
-              <Leaf className="h-8 w-8 text-eco-green-600" />
+            <div className="bg-white p-3 rounded-xl shadow-lg border-2 border-eco-green-200">
+              <Leaf className="h-10 w-10 text-eco-green-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">EcoCart Score</h1>
-              <p className="text-eco-green-100 text-sm">Green Shopping Feedback</p>
+              <h1 className="text-3xl font-bold text-white flex items-center">
+                🌱 EcoCart Score
+              </h1>
+              <p className="text-eco-green-100 text-sm font-medium">Green Shopping Feedback Tool</p>
             </div>
           </button>
           
