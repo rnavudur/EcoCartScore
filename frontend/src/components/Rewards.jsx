@@ -14,11 +14,12 @@ const Rewards = () => {
   const fetchRewards = async () => {
     try {
       setLoading(true)
-      // For demo, using a mock user ID
+      // For demo - skip API call and use fallback data directly
+      throw new Error('Using demo data')
       const data = await cartService.getRewards('user123')
       setRewardsData(data)
     } catch (err) {
-      console.error('Error fetching rewards:', err)
+      console.error('Using demo rewards data:', err)
       // Fallback to mock data for demo
       setRewardsData({
         totalPoints: 1250,

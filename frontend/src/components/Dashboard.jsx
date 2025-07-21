@@ -54,7 +54,7 @@ const Dashboard = ({ sampleCart, onAnalyzeCart, loading }) => {
 
   // Filter products based on search and category
   useEffect(() => {
-    let filtered = products
+    let filtered = products || []
     
     if (searchTerm) {
       filtered = filtered.filter(product => 
@@ -83,11 +83,14 @@ const Dashboard = ({ sampleCart, onAnalyzeCart, loading }) => {
   const fetchProducts = async () => {
     try {
       setIsProductsLoading(true)
+      // For demo - skip API call and use fallback data directly
+      throw new Error('Using demo data')
       const response = await axios.get('/api/products')
-      setProducts(response.data)
-      setFilteredProducts(response.data)
+      const productData = Array.isArray(response.data) ? response.data : []
+      setProducts(productData)
+      setFilteredProducts(productData)
     } catch (error) {
-      console.error('Failed to fetch products:', error)
+      console.error('Using fallback products for demo:', error)
       // Enhanced fallback with all categories populated and REAL product images
       const fallbackProducts = [
         // Dairy Products
@@ -996,7 +999,7 @@ const Dashboard = ({ sampleCart, onAnalyzeCart, loading }) => {
                   ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' 
                   : 'space-y-4'
               }`}>
-                {filteredProducts.map((product) => {
+                {Array.isArray(filteredProducts) && filteredProducts.map((product) => {
                   const overallScore = calculateOverallEcoScore(product)
                   const isInCart = cart.some(item => item.id === product.productId)
                   

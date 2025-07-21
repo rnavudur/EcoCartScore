@@ -15,10 +15,12 @@ const Insights = () => {
   const fetchInsights = async () => {
     try {
       setLoading(true)
+      // For demo - skip API call and use fallback data directly
+      throw new Error('Using demo data')
       const data = await cartService.getEcoInsights(selectedTimeframe)
       setInsightsData(data)
     } catch (err) {
-      console.error('Error fetching insights:', err)
+      console.error('Using demo insights data:', err)
       // Fallback to mock data for demo
       setInsightsData({
         totalTrips: 12,
