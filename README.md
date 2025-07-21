@@ -1,6 +1,11 @@
-# EcoCart Score – Green Shopping Feedback Tool
+# EcoCart Score 🌱
 
-## Overview
+A comprehensive sustainability platform for conscious shopping decisions.
+
+## 🌟 Live Demo
+🔗 **[View Live Site](https://rnavudur.github.io/EcoCartScore/)** 
+
+## 🚀 Project Overview
 
 EcoCart Score is an intelligent sustainability scoring system that analyzes a customer's shopping cart and provides real-time "eco scores" after checkout. The system evaluates environmental friendliness based on:
 
