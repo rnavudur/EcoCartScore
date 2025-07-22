@@ -115,4 +115,5 @@ Detailed API documentation is available at `/docs/api.md` after starting the ser
 
 ## License
 
-This project is proprietary to Walmart Inc. 
+This project is owned and maintained by Rishitha Navuduru.
+All rights reserved.
